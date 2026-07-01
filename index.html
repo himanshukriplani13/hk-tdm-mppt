@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TDM MPPT Controller — Himanshu Kriplani</title>
+<meta name="description" content="Time Division Multiplexed MPPT Controller — Final Year Project, University of Sheffield. Custom PCB solar controller tracking three modules with one converter.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #1C1C1E;
+    --black-2: #2C2C2E;
+    --black-3: #3A3A3C;
+    --yellow: #F5C518;
+    --yellow-dim: rgba(245, 197, 24, 0.12);
+    --yellow-mid: rgba(245, 197, 24, 0.4);
+    --white: #F5F5F7;
+    --white-dim: rgba(245, 245, 247, 0.6);
+    --white-dimmer: rgba(245, 245, 247, 0.3);
+    --cyan: #30D5C8;
+    --cyan-dim: rgba(48, 213, 200, 0.15);
+    --border: rgba(245, 245, 247, 0.1);
+    --border-strong: rgba(245, 245, 247, 0.2);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+    height: 52px;
+    background: rgba(28, 28, 30, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 0.5px solid var(--border);
+  }
+
+  .nav-logo {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: var(--yellow);
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-size: 13px;
+    color: var(--white-dim);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--white); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 120px 48px 80px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 800px; height: 800px;
+    background: radial-gradient(circle, rgba(245,197,24,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-eyebrow {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--yellow);
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.1s forwards;
+  }
+
+  .hero h1 {
+    font-size: clamp(36px, 6vw, 76px);
+    font-weight: 300;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    color: var(--white);
+    max-width: 900px;
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.25s forwards;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: var(--yellow);
+  }
+
+  .hero-sub {
+    font-size: 19px;
+    font-weight: 300;
+    color: var(--white-dim);
+    max-width: 560px;
+    margin-bottom: 56px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.4s forwards;
+  }
+
+  .hero-meta {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--white-dimmer);
+    margin-bottom: 64px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.5s forwards;
+  }
+
+  .hero-img-wrap {
+    width: 100%;
+    max-width: 820px;
+    position: relative;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.6s forwards;
+  }
+
+  .hero-img-wrap img {
+    width: 100%;
+    border-radius: 16px;
+    display: block;
+    border: 0.5px solid var(--border-strong);
+  }
+
+  .hero-img-placeholder {
+    width: 100%;
+    max-width: 820px;
+    height: 460px;
+    background: var(--black-2);
+    border-radius: 16px;
+    border: 1px dashed var(--border-strong);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.6s forwards;
+  }
+
+  .hero-img-placeholder span:first-child {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--yellow);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .hero-img-placeholder span:last-child {
+    font-size: 12px;
+    color: var(--white-dimmer);
+  }
+
+  .hero-caption {
+    font-size: 12px;
+    color: var(--white-dimmer);
+    margin-top: 14px;
+    letter-spacing: 0.04em;
+  }
+
+  /* SECTIONS */
+  section {
+    padding: 120px 48px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-full {
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--yellow);
+    margin-bottom: 20px;
+  }
+
+  h2 {
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 300;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    color: var(--white);
+    margin-bottom: 48px;
+  }
+
+  h2 strong {
+    font-weight: 500;
+  }
+
+  /* PROBLEM */
+  .problem-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 48px;
+  }
+
+  .problem-card {
+    background: var(--black);
+    padding: 40px 36px;
+    transition: background 0.3s;
+  }
+
+  .problem-card:hover { background: var(--black-2); }
+
+  .problem-num {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--yellow);
+    margin-bottom: 20px;
+  }
+
+  .problem-card h3 {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--white);
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+
+  .problem-card p {
+    font-size: 14px;
+    color: var(--white-dim);
+    line-height: 1.7;
+  }
+
+  /* SOLUTION */
+  .solution-hero-stat {
+    font-size: clamp(72px, 12vw, 140px);
+    font-weight: 300;
+    letter-spacing: -0.04em;
+    color: var(--white);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .solution-hero-stat em {
+    font-style: normal;
+    color: var(--yellow);
+  }
+
+  .solution-description {
+    font-size: 20px;
+    font-weight: 300;
+    color: var(--white-dim);
+    max-width: 640px;
+    line-height: 1.6;
+    margin-bottom: 64px;
+  }
+
+  .arch-diagram {
+    background: var(--black-2);
+    border: 0.5px solid var(--border-strong);
+    border-radius: 16px;
+    padding: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    overflow-x: auto;
+  }
+
+  .arch-module {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 100px;
+  }
+
+  .arch-box {
+    background: var(--yellow-dim);
+    border: 0.5px solid var(--yellow-mid);
+    border-radius: 8px;
+    padding: 12px 16px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--yellow);
+    white-space: nowrap;
+  }
+
+  .arch-box.control {
+    background: var(--cyan-dim);
+    border-color: rgba(48, 213, 200, 0.4);
+    color: var(--cyan);
+    padding: 20px 24px;
+    font-size: 14px;
+  }
+
+  .arch-box.battery {
+    background: rgba(245,245,247,0.06);
+    border-color: var(--border-strong);
+    color: var(--white-dim);
+  }
+
+  .arch-label {
+    font-size: 10px;
+    color: var(--white-dimmer);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .arch-arrow {
+    font-size: 18px;
+    color: var(--border-strong);
+    margin: 0 12px;
+    flex-shrink: 0;
+    align-self: center;
+    margin-bottom: 24px;
+  }
+
+  .arch-modules-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  /* SPECS */
+  .specs-section { background: var(--black-2); }
+
+  .specs-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 120px 48px;
+  }
+
+  .specs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .spec-row {
+    background: var(--black-2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 32px;
+    transition: background 0.2s;
+    gap: 24px;
+  }
+
+  .spec-row:hover { background: var(--black-3); }
+
+  .spec-label {
+    font-size: 13px;
+    color: var(--white-dimmer);
+    font-weight: 400;
+    white-space: nowrap;
+  }
+
+  .spec-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--white);
+    text-align: right;
+  }
+
+  .spec-value.highlight { color: var(--yellow); }
+
+  /* RESULTS */
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 64px;
+  }
+
+  .result-card {
+    background: var(--black);
+    padding: 48px 32px;
+    text-align: center;
+    transition: background 0.3s;
+  }
+
+  .result-card:hover { background: var(--black-2); }
+
+  .result-num {
+    font-size: clamp(40px, 5vw, 60px);
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    color: var(--white);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .result-num.yellow { color: var(--yellow); }
+
+  .result-label {
+    font-size: 13px;
+    color: var(--white-dim);
+    margin-bottom: 6px;
+  }
+
+  .result-sub {
+    font-size: 11px;
+    color: var(--white-dimmer);
+    letter-spacing: 0.04em;
+  }
+
+  /* HOW IT WORKS */
+  .steps {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 48px;
+    margin-top: 48px;
+  }
+
+  .step {
+    position: relative;
+    padding-top: 28px;
+    border-top: 0.5px solid var(--border);
+  }
+
+  .step-num {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--yellow);
+    margin-bottom: 16px;
+  }
+
+  .step h3 {
+    font-size: 19px;
+    font-weight: 500;
+    color: var(--white);
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+
+  .step p {
+    font-size: 14px;
+    color: var(--white-dim);
+    line-height: 1.7;
+  }
+
+  /* PHASES */
+  .phases-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 48px;
+  }
+
+  .phase-card {
+    background: var(--black-2);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    transition: border-color 0.3s;
+  }
+
+  .phase-card:hover { border-color: var(--border-strong); }
+
+  .phase-card.current {
+    border-color: var(--yellow-mid);
+  }
+
+  .phase-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 24px;
+  }
+
+  .phase-badge.p1 {
+    background: rgba(245,245,247,0.08);
+    color: var(--white-dim);
+  }
+
+  .phase-badge.p2 {
+    background: var(--yellow-dim);
+    color: var(--yellow);
+  }
+
+  .phase-card h3 {
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+
+  .phase-card .phase-sub {
+    font-size: 13px;
+    color: var(--white-dimmer);
+    margin-bottom: 28px;
+  }
+
+  .phase-img-placeholder {
+    width: 100%;
+    height: 200px;
+    background: var(--black-3);
+    border-radius: 10px;
+    border: 1px dashed var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--white-dimmer);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  .phase-bullets {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .phase-bullets li {
+    font-size: 13px;
+    color: var(--white-dim);
+    padding-left: 18px;
+    position: relative;
+    line-height: 1.5;
+  }
+
+  .phase-bullets li::before {
+    content: '–';
+    position: absolute;
+    left: 0;
+    color: var(--yellow);
+  }
+
+  /* DIVIDER */
+  .divider {
+    width: 100%;
+    height: 0.5px;
+    background: var(--border);
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 80px 48px;
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 48px;
+  }
+
+  .footer-left h2 {
+    font-size: 36px;
+    font-weight: 300;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+
+  .footer-left p {
+    font-size: 14px;
+    color: var(--white-dimmer);
+    margin-bottom: 4px;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 16px;
+    margin-top: 32px;
+    flex-wrap: wrap;
+  }
+
+  .footer-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--white);
+    text-decoration: none;
+    padding: 10px 20px;
+    border: 0.5px solid var(--border-strong);
+    border-radius: 100px;
+    transition: all 0.2s;
+  }
+
+  .footer-link:hover {
+    background: var(--yellow);
+    color: var(--black);
+    border-color: var(--yellow);
+  }
+
+  .footer-right {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .footer-right p {
+    font-size: 12px;
+    color: var(--white-dimmer);
+    line-height: 1.8;
+  }
+
+  .footer-right a {
+    color: var(--white-dimmer);
+    text-decoration: none;
+  }
+
+  .footer-right a:hover { color: var(--yellow); }
+
+  /* REVEAL ANIMATION */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* MOBILE */
+  @media (max-width: 768px) {
+    nav { padding: 0 24px; }
+    .nav-links { display: none; }
+    section { padding: 80px 24px; }
+    .problem-grid { grid-template-columns: 1fr; }
+    .specs-grid { grid-template-columns: 1fr; }
+    .results-grid { grid-template-columns: 1fr 1fr; }
+    .steps { grid-template-columns: 1fr; gap: 32px; }
+    .phases-grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; }
+    .footer-right { text-align: left; }
+    .arch-diagram { padding: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#">HK · TDM MPPT</a>
+  <ul class="nav-links">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#solution">Solution</a></li>
+    <li><a href="#specs">Specs</a></li>
+    <li><a href="#results">Results</a></li>
+    <li><a href="#phases">Phases</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <p class="hero-eyebrow">Final Year Project · University of Sheffield · 2026</p>
+  <h1>Time Division Multiplexed<br><em>MPPT Controller</em></h1>
+  <p class="hero-sub">One converter. Three solar modules. Near distributed tracking performance at central system cost.</p>
+  <p class="hero-meta">MEng Electronic &amp; Electrical Engineering &nbsp;·&nbsp; Supervisor: Dr. Jack Forrester</p>
+
+  <!-- SWAP THIS: replace the placeholder div with <img src="your-photo.jpg" ...> -->
+  <div class="hero-img-placeholder">
+    <span>Hardware photo</span>
+    <span>Replace this placeholder with your PCB image</span>
+  </div>
+  <p class="hero-caption">Phase 2 · Custom KiCAD PCB · Fully SMD · Assembled and tested</p>
+</div>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <p class="eyebrow reveal">The problem</p>
+  <h2 class="reveal">Solar panels lose up to <strong>30% of their power</strong><br>under partial shading.</h2>
+
+  <div class="problem-grid reveal">
+    <div class="problem-card">
+      <p class="problem-num">01</p>
+      <h3>Non-linear I-V characteristics</h3>
+      <p>Solar cells only achieve 10–15% efficiency in isolation. Partial shading fractures the P–V curve into multiple local maxima, leaving conventional trackers locked on the wrong peak.</p>
+    </div>
+    <div class="problem-card">
+      <p class="problem-num">02</p>
+      <h3>Distributed MPPT is expensive</h3>
+      <p>Per-module converters recover the loss but triple the hardware count, cost, thermal budget and failure surface — commercially unviable for small-scale residential systems.</p>
+    </div>
+    <div class="problem-card">
+      <p class="problem-num">03</p>
+      <h3>Complex algorithms don't converge</h3>
+      <p>PSO, ANN and cuckoo-search methods require expensive processors, training data, and still fail to guarantee convergence under real-world time-varying irradiance.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SOLUTION -->
+<section id="solution">
+  <p class="eyebrow reveal">The solution</p>
+  <div class="solution-hero-stat reveal">1 → <em>3</em></div>
+  <p class="solution-description reveal">The TDM MPPT controller time-shares a single synchronous buck converter across three PV modules, switching each into the power path sequentially. Every module gets its own tracked operating point — without 3× the hardware, cost, or heat.</p>
+
+  <div class="arch-diagram reveal">
+    <div class="arch-modules-row">
+      <div class="arch-module">
+        <div class="arch-box">Module 1<br><small style="opacity:0.7">2.2W · 11V</small></div>
+        <div class="arch-label">PV input</div>
+      </div>
+      <div class="arch-module">
+        <div class="arch-box">Module 2<br><small style="opacity:0.7">2.2W · 11V</small></div>
+        <div class="arch-label">PV input</div>
+      </div>
+      <div class="arch-module">
+        <div class="arch-box">Module 3<br><small style="opacity:0.7">2.2W · 11V</small></div>
+        <div class="arch-label">PV input</div>
+      </div>
+    </div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-module">
+      <div class="arch-box control">ESP32-S3<br>TDM Controller<br><small style="opacity:0.7">P&amp;O · FreeRTOS</small></div>
+      <div class="arch-label">MCU + MPPT</div>
+    </div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-module">
+      <div class="arch-box battery">4Ah Lead Acid<br><small style="opacity:0.7">6.75–7.5V</small></div>
+      <div class="arch-label">Battery load</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SPECS -->
+<div class="specs-section">
+  <div class="specs-inner" id="specs">
+    <p class="eyebrow reveal">Hardware</p>
+    <h2 class="reveal">Custom silicon. Custom PCB.<br><strong>Every component chosen on purpose.</strong></h2>
+
+    <div class="specs-grid reveal">
+      <div class="spec-row">
+        <span class="spec-label">Input voltage</span>
+        <span class="spec-value highlight">8 – 11 V</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-label">Switching frequency</span>
+        <span class="spec-value highlight">300 kHz</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-label">Converter type</span>
+        <span class="spec-value">Synchronous buck</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-label">Output voltage</span>
+        <span class="spec-value">6.75 – 7.5 V</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-label">Microcontroller</span>
+        <span class="spec-value">ESP32-S3-WROOM-1</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-label">RTOS</span>
+        <span class="spec-value">FreeRTOS</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-label">External ADC</span>
+        <span class="spec-value">Dual MCP3208 · 100k S/s · 12 ch</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-label">Current sense</span>
+        <span class="spec-value">INA240 · 50× gain · PWM reject</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-label">Gate driver</span>
+        <span class="spec-value">LM5104 · bootstrap diode</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-label">MOSFET</span>
+        <span class="spec-value">IPP055N03L · Rds 6.2 mΩ</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-label">Inductor</span>
+        <span class="spec-value">150 µH · CCM across full load</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-label">Ripple voltage</span>
+        <span class="spec-value">&lt; 0.3 V</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-label">PCB design</span>
+        <span class="spec-value">KiCAD · fully SMD · two-phase</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-label">Communication</span>
+        <span class="spec-value">SPI (ADC) · I²C (OLED)</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-label">MPPT algorithm</span>
+        <span class="spec-value">Perturb &amp; Observe</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-label">Display</span>
+        <span class="spec-value">OLED · live I/V monitoring</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<section id="results">
+  <p class="eyebrow reveal">Results</p>
+  <h2 class="reveal">Measured on the bench.<br><strong>Not simulated.</strong></h2>
+
+  <div class="results-grid reveal">
+    <div class="result-card">
+      <div class="result-num yellow">87%</div>
+      <div class="result-label">Average converter efficiency</div>
+      <div class="result-sub">Peak 90%</div>
+    </div>
+    <div class="result-card">
+      <div class="result-num yellow">86%</div>
+      <div class="result-label">MPPT tracking efficiency</div>
+      <div class="result-sub">vs characterised MPP</div>
+    </div>
+    <div class="result-card">
+      <div class="result-num">&lt;30s</div>
+      <div class="result-label">Algorithm convergence</div>
+      <div class="result-sub">~15 iterations at 2s each</div>
+    </div>
+    <div class="result-card">
+      <div class="result-num">0.245W</div>
+      <div class="result-label">Extracted power</div>
+      <div class="result-sub">vs 0.286W characterised MPP</div>
+    </div>
+  </div>
+
+  <p class="reveal" style="font-size:14px; color:var(--white-dimmer); max-width:600px;">MPP identified at 11.43 V, 0.286 W. P&amp;O algorithm converges within ~15 iterations, then dithers around the peak — expected and characteristic P&amp;O behaviour.</p>
+</section>
+
+<div class="divider"></div>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <p class="eyebrow reveal">How it works</p>
+  <h2 class="reveal">Three modules. One loop.<br><strong>Milliseconds apart.</strong></h2>
+
+  <div class="steps">
+    <div class="step reveal">
+      <p class="step-num">01 — Sample</p>
+      <h3>Each module switched in sequence</h3>
+      <p>The ESP32 time-multiplexes each PV module into the converter in turn. The dual MCP3208 ADCs capture I/V pairs at 100k samples/sec, filtered through hardware RC stages to suppress 300 kHz PWM switching noise.</p>
+    </div>
+    <div class="step reveal">
+      <p class="step-num">02 — Track</p>
+      <h3>P&O identifies the peak</h3>
+      <p>A per-module Perturb &amp; Observe algorithm running under FreeRTOS uses the latest I/V samples to determine whether to increase or decrease duty cycle. Converges within 15 iterations under real PV conditions.</p>
+    </div>
+    <div class="step reveal">
+      <p class="step-num">03 — Deliver</p>
+      <h3>Power extracted, battery charged</h3>
+      <p>The synchronous buck duty cycle is adjusted per module, harvested energy fed to the 4Ah lead-acid battery via CC/CV charging logic. OLED displays live I/V readings per channel.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PHASES -->
+<section id="phases">
+  <p class="eyebrow reveal">Phase evolution</p>
+  <h2 class="reveal">From prototype<br>to <strong>production-grade split architecture.</strong></h2>
+
+  <div class="phases-grid">
+    <div class="phase-card reveal">
+      <span class="phase-badge p1">Phase 1</span>
+      <h3>Single SBC prototype</h3>
+      <p class="phase-sub">Mixed through-hole and SMD · Single converter · Validation</p>
+      <!-- SWAP: replace with <img src="phase1.jpg" style="width:100%;border-radius:10px;margin-bottom:28px;"> -->
+      <div class="phase-img-placeholder">Phase 1 PCB photo</div>
+      <ul class="phase-bullets">
+        <li>Synchronous buck converter validated at 87% average efficiency, peak 90%</li>
+        <li>Confirmed converter feasibility with real PV input and battery load</li>
+        <li>Identified ESP32 internal ADC noise floor insufficient for MPPT accuracy</li>
+        <li>Amplifier offset errors at low current motivated Phase 2 redesign</li>
+      </ul>
+    </div>
+
+    <div class="phase-card current reveal">
+      <span class="phase-badge p2">Phase 2 · Current</span>
+      <h3>Split architecture · Full system</h3>
+      <p class="phase-sub">3× identical SBC boards + central control board · Full SMD</p>
+      <!-- SWAP: replace with <img src="phase2.jpg" style="width:100%;border-radius:10px;margin-bottom:28px;"> -->
+      <div class="phase-img-placeholder">Phase 2 PCB photo — use your hardware shot</div>
+      <ul class="phase-bullets">
+        <li>Dedicated control board + 3× identical SBC daughter boards via ribbon connectors</li>
+        <li>INA240 current sense amplifier: 50× gain with PWM rejection</li>
+        <li>Dual MCP3208 external ADC: 100k samples/sec, 12 channels via SPI</li>
+        <li>FreeRTOS concurrent task scheduling for TDM switching logic</li>
+        <li>Fully SMD design: compact, cost-effective, manufacturable</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER / CONTACT -->
+<div class="divider"></div>
+<footer id="contact">
+  <div class="footer-left">
+    <h2>Himanshu Kriplani</h2>
+    <p>MEng Electronic &amp; Electrical Engineering</p>
+    <p>University of Sheffield · First Class · 2026</p>
+    <p style="margin-top:4px; color:var(--white-dimmer)">Supervisor: Dr. Jack Forrester</p>
+
+    <div class="footer-links">
+      <a class="footer-link" href="https://linkedin.com/in/" target="_blank">LinkedIn ↗</a>
+      <a class="footer-link" href="https://github.com/" target="_blank">GitHub ↗</a>
+      <a class="footer-link" href="mailto:">Email ↗</a>
+    </div>
+  </div>
+
+  <div class="footer-right">
+    <p>TDM MPPT Controller</p>
+    <p>Final Year Project · 2025–2026</p>
+    <p style="margin-top:16px">
+      <a href="#">Back to top ↑</a>
+    </p>
+  </div>
+</footer>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
